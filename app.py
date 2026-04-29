@@ -246,7 +246,7 @@ with tab_results:
         fcol1, fcol2, fcol3 = st.columns(3)
         with fcol1:
             min_stars = st.selectbox(
-                "Minimum stars", [1, 2, 3, 4, 5], index=2,
+                "Minimum stars", [1, 2, 3, 4, 5], index=0,
                 format_func=lambda x: STAR_LABELS[x],
             )
         with fcol2:
@@ -271,6 +271,12 @@ with tab_results:
             filtered = [j for j in filtered if j.get("source") in source_filter]
 
         st.markdown(f"**Showing {len(filtered)} jobs** (filtered from {len(jobs)} total)")
+
+        if not filtered:
+            st.warning(
+                "No jobs match the current filters. "
+                "Try lowering the **Minimum stars** filter to ⭐ Weak Match to see all results."
+            )
 
         # ---- Star summary counts
         star_counts = {}
