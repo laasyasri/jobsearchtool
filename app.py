@@ -242,12 +242,29 @@ with tab_results:
     else:
         jobs = st.session_state["jobs_scored"]
 
+        # ---- Debug: show star distribution so user can see what scored
+        with st.expander("🔎 Score breakdown (click to expand)", expanded=True):
+            dist = {}
+            for j in jobs:
+                s = j.get("stars", 0)
+                dist[s] = dist.get(s, 0) + 1
+            dist_str = " | ".join(
+                f"{'⭐'*s if s else 'Unscored'}: {c}" for s, c in sorted(dist.items(), reverse=True)
+            )
+            st.caption(f"Total: {len(jobs)} jobs fetched  —  {dist_str}")
+            if dist.get(0, 0) == len(jobs):
+                st.error(
+                    "All jobs are **Unscored** — Claude's fit analysis failed. "
+                    "Check your Anthropic API key in Streamlit Secrets and ensure it has credits."
+                )
+
         # ---- Filters
         fcol1, fcol2, fcol3 = st.columns(3)
         with fcol1:
             min_stars = st.selectbox(
-                "Minimum stars", [1, 2, 3, 4, 5], index=0,
-                format_func=lambda x: STAR_LABELS[x],
+                "Minimum stars",
+                [0, 1, 2, 3, 4, 5], index=0,
+                format_func=lambda x: "Show all (including unscored)" if x == 0 else STAR_LABELS[x],
             )
         with fcol2:
             spons_filter = st.selectbox(
@@ -260,13 +277,12 @@ with tab_results:
                 default=list({j["source"] for j in jobs}),
             )
 
-        filtered = [j for j in jobs if j.get("stars", 0) >= min_stars]
+        # min_stars=0 means show everything
+        filtered = jobs if min_stars == 0 else [j for j in jobs if j.get("stars", 0) >= min_stars]
         if spons_filter == "Confirmed sponsorship only":
             filtered = [j for j in filtered if j.get("sponsorship_confirmed")]
         elif spons_filter == "Sponsorship mentioned":
             filtered = [j for j in filtered if j.get("sponsorship_mentioned")]
-        elif spons_filter == "No sponsorship needed":
-            filtered = filtered  # show all
         if source_filter:
             filtered = [j for j in filtered if j.get("source") in source_filter]
 
@@ -275,7 +291,7 @@ with tab_results:
         if not filtered:
             st.warning(
                 "No jobs match the current filters. "
-                "Try lowering the **Minimum stars** filter to ⭐ Weak Match to see all results."
+                "Set **Minimum stars** to **Show all** to see every result."
             )
 
         # ---- Star summary counts
@@ -293,7 +309,7 @@ with tab_results:
         # ---- Job cards
         for job in filtered:
             stars = job.get("stars", 0)
-            star_emoji = "⭐" * stars if stars else "—"
+            star_emoji = "⭐" * stars if stars else "🔘 Unscored"
             sponsored_badge = ""
             if job.get("sponsorship_confirmed"):
                 sponsored_badge = " 🟢 **Sponsorship confirmed**"
