@@ -81,29 +81,52 @@ with st.sidebar:
     # --- API Keys (collapsible)
     st.markdown("---")
     with st.expander("🔑 API Keys", expanded=False):
-        st.caption("Keys are stored only in this browser session — never saved to disk from this UI.")
-        anthropic_key = st.text_input(
-            "Anthropic API Key", value=get_anthropic_key(),
-            type="password", key="anthropic_key_input",
-        )
-        rapidapi_key = st.text_input(
-            "RapidAPI Key (JSearch)", value=get_rapidapi_key(),
-            type="password", key="rapidapi_key_input",
-        )
-        serpapi_key = st.text_input(
-            "SerpAPI Key (fallback)", value=get_serpapi_key(),
-            type="password", key="serpapi_key_input",
-        )
+        st.caption("Keys set via Streamlit Secrets or .env are used automatically and never displayed.")
+
+        _env_anthropic = get_anthropic_key()
+        _env_rapid = get_rapidapi_key()
+        _env_serp = get_serpapi_key()
+
+        if _env_anthropic:
+            st.success("Anthropic API Key: ✅ Configured via Secrets")
+            anthropic_key = ""
+        else:
+            anthropic_key = st.text_input(
+                "Anthropic API Key", value="",
+                type="password", key="anthropic_key_input",
+                placeholder="sk-ant-...",
+            )
+
+        if _env_rapid:
+            st.success("RapidAPI Key (JSearch): ✅ Configured via Secrets")
+            rapidapi_key = ""
+        else:
+            rapidapi_key = st.text_input(
+                "RapidAPI Key (JSearch)", value="",
+                type="password", key="rapidapi_key_input",
+                placeholder="Paste your RapidAPI key",
+            )
+
+        if _env_serp:
+            st.success("SerpAPI Key: ✅ Configured via Secrets")
+            serpapi_key = ""
+        else:
+            serpapi_key = st.text_input(
+                "SerpAPI Key (fallback)", value="",
+                type="password", key="serpapi_key_input",
+                placeholder="Paste your SerpAPI key",
+            )
+
         st.markdown(
             "[Get JSearch key](https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch) · "
             "[Get SerpAPI key](https://serpapi.com) · "
             "[Get Anthropic key](https://console.anthropic.com)"
         )
 
-    # Effective keys (sidebar input takes priority over .env)
-    eff_anthropic = anthropic_key or get_anthropic_key()
-    eff_rapid = rapidapi_key or get_rapidapi_key()
-    eff_serp = serpapi_key or get_serpapi_key()
+    # Secret values take priority; fall back to what user typed in the UI
+    eff_anthropic = _env_anthropic or anthropic_key
+    eff_rapid = _env_rapid or rapidapi_key
+    eff_serp = _env_serp or serpapi_key
 
 
 # ── Main Tabs ─────────────────────────────────────────────────────────────────
