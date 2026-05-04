@@ -187,6 +187,14 @@ with tab_search:
     if not eff_anthropic:
         st.warning("Add your Anthropic API key in the sidebar to enable fit analysis.")
 
+    if eff_anthropic and st.button("🔑 Test Anthropic API Key", key="test_key"):
+        with st.spinner("Testing key…"):
+            ok, msg = analyzer.validate_api_key(eff_anthropic)
+        if ok:
+            st.success("✅ Anthropic API key is valid and working.")
+        else:
+            st.error(f"❌ {msg}")
+
     if st.button("🚀 Search & Analyze", disabled=not search_ready, type="primary"):
         with st.spinner("Searching for jobs…"):
             jobs_raw = js.search_jobs(
@@ -322,8 +330,11 @@ with tab_results:
             ):
                 col_a, col_b = st.columns([3, 1])
                 with col_a:
-                    st.markdown(f"**Match Score:** {job.get('match_score', '?'):.0f}/100")
-                    st.markdown(f"**Summary:** {job.get('fit_summary', '')}")
+                    if stars == 0:
+                        st.error(f"⚠️ Scoring failed: {job.get('fit_summary', 'Unknown error')}")
+                    else:
+                        st.markdown(f"**Match Score:** {job.get('match_score', '?'):.0f}/100")
+                        st.markdown(f"**Summary:** {job.get('fit_summary', '')}")
                     if job.get("why_apply"):
                         st.success(f"💡 {job['why_apply']}")
 

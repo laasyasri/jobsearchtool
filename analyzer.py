@@ -11,6 +11,26 @@ def _client(api_key: str) -> anthropic.Anthropic:
     return anthropic.Anthropic(api_key=api_key)
 
 
+def validate_api_key(api_key: str) -> tuple[bool, str]:
+    """Quick check that the Anthropic key is valid and has credits. Returns (ok, message)."""
+    if not api_key or not api_key.strip():
+        return False, "Anthropic API key is missing. Add it to Streamlit Secrets as ANTHROPIC_API_KEY."
+    try:
+        client = _client(api_key)
+        client.messages.create(
+            model=MODEL,
+            max_tokens=10,
+            messages=[{"role": "user", "content": "hi"}],
+        )
+        return True, "OK"
+    except anthropic.AuthenticationError:
+        return False, "Invalid Anthropic API key. Check the key value in Streamlit Secrets."
+    except anthropic.PermissionDeniedError:
+        return False, "Anthropic API key lacks permissions. Ensure it is a valid API key."
+    except Exception as e:
+        return False, f"Anthropic API error: {e}"
+
+
 # ── Fit Analysis ─────────────────────────────────────────────────────────────
 
 FIT_SYSTEM = """You are a senior technical recruiter and career coach with deep expertise in matching candidates to job descriptions.
